@@ -1,7 +1,9 @@
 package com.jusipat.ndw;
 
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.PlayerEvent;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.UUID;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
@@ -9,9 +11,8 @@ import net.minecraft.util.ChunkCoordinates;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.PlayerEvent;
 
 public class BedStatus {
 
@@ -47,10 +48,12 @@ public class BedStatus {
             MyMod.LOG.info("Bed X: " + x + "Bed Y: " + y + "Bed Z: " + y);
 
             for (Object playerObj : event.world.playerEntities) { // todo: fix this (not working at least in LAN tests)
+                MyMod.LOG.info(playerObj);
+
                 if (playerObj instanceof EntityPlayer) {
                     EntityPlayer player = (EntityPlayer) playerObj;
-                    if (player.getBedLocation() != null &&
-                        player.getBedLocation().equals(new ChunkCoordinates(x, y, z))) {
+                    if (player.getBedLocation() != null && player.getBedLocation()
+                        .equals(new ChunkCoordinates(x, y, z))) {
                         UUID playerUUID = player.getUniqueID();
                         bedDestroyedMap.put(playerUUID, true);
                         MyMod.LOG.info("Bed destroyed for player: " + player.getDisplayName());
@@ -61,7 +64,6 @@ public class BedStatus {
             MyMod.LOG.info("A bed was destroyed, but no linked player was found.");
         }
     }
-
 
     @SubscribeEvent
     public void onPlayerDeath(LivingDeathEvent event) {
