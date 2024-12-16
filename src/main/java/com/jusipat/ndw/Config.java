@@ -1,4 +1,4 @@
-package com.myname.mymodid;
+package com.jusipat.ndw;
 
 import java.io.File;
 
