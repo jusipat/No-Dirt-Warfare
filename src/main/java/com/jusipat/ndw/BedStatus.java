@@ -4,15 +4,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockBed;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.item.ItemBed;
 import net.minecraft.potion.Potion;
 import net.minecraft.potion.PotionEffect;
 import net.minecraft.util.ChunkCoordinates;
+import net.minecraft.world.World;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
+import net.minecraftforge.event.entity.player.PlayerInteractEvent;
+import net.minecraftforge.event.entity.player.PlayerSleepInBedEvent;
+import net.minecraftforge.event.world.BlockEvent;
 
 public class BedStatus {
 
@@ -40,30 +48,24 @@ public class BedStatus {
     }
 
     @SubscribeEvent
-    public void onBlockBreak(net.minecraftforge.event.world.BlockEvent.BreakEvent event) {
-        if (event.block instanceof net.minecraft.block.BlockBed) {
-            int x = event.x;
-            int y = event.y;
-            int z = event.z;
-            MyMod.LOG.info("Bed X: " + x + "Bed Y: " + y + "Bed Z: " + y);
-
-            for (Object playerObj : event.world.playerEntities) { // todo: fix this (not working at least in LAN tests)
-                MyMod.LOG.info(playerObj);
-
-                if (playerObj instanceof EntityPlayer) {
-                    EntityPlayer player = (EntityPlayer) playerObj;
-                    if (player.getBedLocation() != null && player.getBedLocation()
-                        .equals(new ChunkCoordinates(x, y, z))) {
-                        UUID playerUUID = player.getUniqueID();
-                        bedDestroyedMap.put(playerUUID, true);
-                        MyMod.LOG.info("Bed destroyed for player: " + player.getDisplayName());
-                        return;
-                    }
+    public void onBlockBreak(BlockEvent.BreakEvent event) {
+        if (event.block instanceof BlockBed) {
+            //int bedDirection = event.block.getBedDirection(event.world, event.x, event.y, event.z);
+            for (EntityPlayer victim : event.world.playerEntities) {
+                ChunkCoordinates playerBedLoc = victim.getBedLocation(victim.dimension);
+                if (playerBedLoc == null) { continue; }
+                if ((playerBedLoc.posX == event.x || playerBedLoc.posX == event.x - 1 || playerBedLoc.posX == event.x + 1) // account for bed rotation, this sucks
+                    && playerBedLoc.posY == event.y
+                    && (playerBedLoc.posZ == event.z) || playerBedLoc.posZ == event.z - 1 || playerBedLoc.posZ == event.z + 1) {
+                    UUID victimId = victim.getUniqueID();
+                    bedDestroyedMap.put(victimId, true);
+                    return;
                 }
             }
-            MyMod.LOG.info("A bed was destroyed, but no linked player was found.");
         }
     }
+
+    // todo: reset bedDestroyedMap entry for when a new spawn point is set
 
     @SubscribeEvent
     public void onPlayerDeath(LivingDeathEvent event) {
